@@ -4,17 +4,29 @@
 
 package plog4go
 
-import "log"
+import (
+	"log"
+	"sync"
+)
+
+var (
+	// DefaultLogRootPath log root dir
+	DefaultLogRootPath string = "./run-log"
+	pathMu             sync.Mutex
+)
 
 // file config
 const (
-	// DefaultLogRootPath log root dir
-	DefaultLogRootPath string = "./run-log"
-
 	// Default default log file name
 	DefaultLogFile string = "default.log"
 
 	// default flag
-	DefaultLogFlag int = log.Ldate|log.Ltime
+	DefaultLogFlag int = log.Ldate | log.Ltime
 )
 
+func SetDefaultLogRootPath(logRootPath string) {
+	pathMu.Lock()
+	defer pathMu.Unlock()
+
+	DefaultLogRootPath = logRootPath
+}
