@@ -38,8 +38,8 @@ testLogger.Error("ERROR. Should see this.")
 Output looks
 ```text
 // ./logs/test.log
-2021/06/01 11:48:26.709755 plog4go_test.go:20: [WARN] WARN. Should see this.
-2021/06/01 11:48:26.709813 plog4go_test.go:21: [ERROR] ERROR. Should see this.
+[WARN] 2021/06/20 17:20:34.787450 plog4go_test.go:20: WARN. Should see this.
+[ERROR] 2021/06/20 17:20:34.787792 plog4go_test.go:21: ERROR. Should see this.
 ```
 
 #### Example 2. Start trace log.
@@ -47,30 +47,28 @@ Code
 ```go
 // Use start trace to open trace log.
 testLogger.StartTrace()
-testLogger.Trace("Opened trace. Should see this.")
+testLogger.Trace("Trace on. Should see this.")
 testLogger.StopTrace()
-testLogger.Trace("Opened trace. Shouldn't see this.")
+testLogger.Trace("Trace off. Shouldn't see this.")
 ```
 
 Output looks
 ```text
 // ./logs/test.log
-2021/06/01 11:48:26.709844 plog4go_test.go:24: [TRACE] Opened trace. Should see this.
+[TRACE] 2021/06/20 17:20:34.787828 plog4go_test.go:25: Trace on. Should see this.
 ```
 
 #### Example 3. Redirect stdOut/stdErr to file.
 Code
 ```go
-    // Use start trace to open trace log.
-	testLogger.StartTrace()
-	testLogger.Trace("Opened trace. Should see this.")
-	testLogger.StopTrace()
-	testLogger.Trace("Opened trace. Shouldn't see this.")
+    // Use std to file
+	InitStd(StdOutToConf{To: ToFile, ToDir: "./logs"})
+	fmt.Printf("To console log. Should see in file.")
 ```
 
 Output looks
 ```text
-// ./logs/stdout.log
+// ./logs/stdout.log // Auto rotate file when app restart. Filename like stdout.log.20210620.172034
 To console log. should see in file.
 ```
 
