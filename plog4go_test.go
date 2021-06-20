@@ -54,13 +54,14 @@ func TestUsage(t *testing.T) {
 	testToFileLogger.Error("ERROR. Should see this.")
 
 	// Test Default Logger, v
-	Trace("TRACE. shouldn see this in %s", "./logs/app.log.")
-	Debug("DEBUG. shouldn see this in %s", "./logs/app.log.")
-	Info("INFO. shouldn see this in %s", "./logs/app.log.")
-	Warn("WARN. shouldn see this in %s", "./logs/app.log.")
-	Error("ERROR. shouldn see this in %s", "./logs/app.log.")
+	Trace("TRACE. should see this in %s", "./logs/app.log.")
+	Debug("DEBUG. should see this in %s", "./logs/app.log.")
+	Info("INFO. should see this in %s", "./logs/app.log.")
+	Warn("WARN. should see this in %s", "./logs/app.log.")
+	Error("ERROR. should see this in %s", "./logs/app.log.")
 
 	// Test Panic And Fatal
 	//Panic("PANIC...%s. shouldn see this in %s", "P1", "./logs/app.log.")
-	Fatal("Fatal...%s. shouldn see this in %s", "F1", "./logs/app.log.")
+	Fatal("Fatal...%s. should see this in %s", "F1", "./logs/app.log.")
+	Info("AfterFatal. shouldn't see this")
 }
