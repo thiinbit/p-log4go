@@ -38,8 +38,8 @@ var eastUTCOffset = func() int64 {
 	return int64(secOffset) * int64(time.Second)
 }()
 
-// TimedRotatingWriter
-type TimedRotatingWriter struct {
+// timedRotatingWriter
+type timedRotatingWriter struct {
 	lock            sync.Mutex     // Write file lock
 	filename        string         // File name
 	fp              *os.File       // File pointer
@@ -52,8 +52,8 @@ type TimedRotatingWriter struct {
 }
 
 // NewRotateWrite new writer
-func NewTimedRotateWriter(filename string, interval RotateInterval, rotate int64) (*TimedRotatingWriter, error) {
-	w := &TimedRotatingWriter{
+func newTimedRotateWriter(filename string, interval RotateInterval, rotate int64) (*timedRotatingWriter, error) {
+	w := &timedRotatingWriter{
 		filename: filename,
 		interval: interval,
 		rotate:   rotate,
@@ -80,7 +80,7 @@ func NewTimedRotateWriter(filename string, interval RotateInterval, rotate int64
 }
 
 // initialize
-func (w *TimedRotatingWriter) initialize() error {
+func (w *timedRotatingWriter) initialize() error {
 	if len(w.filename) <= 0 {
 		return fmt.Errorf("file name not set when init rotate writer")
 	}
@@ -100,7 +100,7 @@ func (w *TimedRotatingWriter) initialize() error {
 
 // try rotate
 // There may be concurrency problems when renaming files
-func (w *TimedRotatingWriter) tryRotate() (err error) {
+func (w *timedRotatingWriter) tryRotate() (err error) {
 	// 0. check should exec rotate
 	now := time.Now()
 	nowDateIndex := (now.UnixNano() + eastUTCOffset) / w.intervalNanoSec
@@ -141,7 +141,7 @@ func (w *TimedRotatingWriter) tryRotate() (err error) {
 	return
 }
 
-func (w *TimedRotatingWriter) Write(output []byte) (int, error) {
+func (w *timedRotatingWriter) Write(output []byte) (int, error) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	w.tryRotate()
@@ -254,6 +254,18 @@ const (
 	LstdFlags     = Ldate | Ltime // initial values for the standard logger
 )
 
+// Appender
+type Appender int8
+
+// Log appender ,
+// - output to file `File`
+// - output to console `Console`
+// - output to file and console `File | Console`
+const (
+	ConsoleAppender = 1 << iota
+	FileAppender
+)
+
 // Log level DEBUG/INFO/WARN/ERROR
 type LogLevel int8
 
@@ -280,14 +292,23 @@ type PLogger struct {
 	buf    []byte     // for accumulating text to write
 }
 
-func GetLogger(fileName string, logLevel LogLevel, interval RotateInterval, rotate int64) (*PLogger, error) {
+func GetLogger(filePath string, logLevel LogLevel, interval RotateInterval, rotate int64) (*PLogger, error) {
 
-	return getLogger1(fileName, logLevel, interval, rotate, false)
+	return GetLogger2(filePath, logLevel, interval, rotate, false, FileAppender)
 }
 
-func getLogger1(fileName string, logLevel LogLevel, interval RotateInterval, rotate int64, traceOn bool) (*PLogger, error) {
+func GetLogger0(filepath string) (*PLogger, error) {
+	return GetLogger2(filepath, DEBUG, Daily, defaultRotateCount, defaultTraceOn, FileAppender)
+}
 
-	fileDir := filepath.Dir(fileName)
+func GetLogger1(filePath string, logLevel LogLevel, interval RotateInterval, rotate int64, appender Appender) (*PLogger, error) {
+
+	return GetLogger2(filePath, logLevel, interval, rotate, false, appender)
+}
+
+func GetLogger2(filePath string, logLevel LogLevel, interval RotateInterval, rotate int64, traceOn bool, appender Appender) (*PLogger, error) {
+
+	fileDir := filepath.Dir(filePath)
 	exist, err := pathExists(fileDir)
 	if err != nil {
 		return nil, fmt.Errorf("log file path err, %v", err)
@@ -298,17 +319,29 @@ func getLogger1(fileName string, logLevel LogLevel, interval RotateInterval, rot
 			return nil, fmt.Errorf("mkdir logfile dir err, %v", err)
 		}
 	}
-	var writer *TimedRotatingWriter
-	writer, err = NewTimedRotateWriter(fileName, interval, rotate)
-	if err != nil {
-		return nil, fmt.Errorf("create RotateRiter err, %v", err)
+
+	// TODO: Multi writer
+	var writers = make([]io.Writer, 0)
+
+	if appender&FileAppender != 0 {
+		var fileWriter *timedRotatingWriter
+		fileWriter, err = newTimedRotateWriter(filePath, interval, rotate)
+		if err != nil {
+			return nil, fmt.Errorf("create RotateRiter err, %v", err)
+		}
+		writers = append(writers, fileWriter)
 	}
+
+	if appender&ConsoleAppender != 0 {
+		writers = append(writers, os.Stdout)
+	}
+
 	return &PLogger{
 		logLevel:      logLevel,
 		isTraceEnable: traceOn,
 		prefix:        "",
 		flag:          Ldate | Ltime | Lmicroseconds | Lshortfile,
-		out:           writer,
+		out:           io.MultiWriter(writers...),
 	}, nil
 }
 
@@ -531,7 +564,7 @@ const (
 )
 
 var (
-	defaultLogger, _ = getLogger1(defaultLogPath, DEBUG, Daily, defaultRotateCount, defaultTraceOn)
+	defaultLogger, _ = GetLogger0(defaultLogPath)
 )
 
 // Trace Log

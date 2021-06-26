@@ -65,3 +65,29 @@ func TestUsage(t *testing.T) {
 	Fatal("Fatal...%s. Should see this in %s", "F1", "./logs/app.log.")
 	Info("AfterFatal. Shouldn't see this")
 }
+
+func TestMultiAppender(t *testing.T) {
+	multiAppenderLogger, _ := GetLogger1("./logs/multiOutput.log", INFO, Hourly, 3, FileAppender|ConsoleAppender)
+	multiAppenderLogger.Trace("TRACE. Shouldn't see this in %s", "./logs/multiOutput.log & Console")
+	multiAppenderLogger.Debug("DEBUG. Shouldn't see this in %s", "./logs/multiOutput.log & Console")
+	multiAppenderLogger.Info("INFO. Should see this in %s", "./logs/multiOutput.log & Console")
+	multiAppenderLogger.Warn("WARN. Should see this in %s", "./logs/multiOutput.log & Console")
+	multiAppenderLogger.Error("ERROR. Should see this in %s", "./logs/multiOutput.log & Console")
+
+	fileLogger, _ := GetLogger0("./logs/fileOutput.log")
+	fileLogger.Trace("TRACE. Shouldn see this in %s", "./logs/fileOutput.log")
+	fileLogger.Debug("DEBUG. Shouldn see this in %s", "./logs/fileOutput.log")
+	fileLogger.Info("INFO. Should see this in %s", "./logs/fileOutput.log")
+	fileLogger.Warn("WARN. Should see this in %s", "./logs/fileOutput.log")
+	fileLogger.Error("ERROR. Should see this in %s", "./logs/fileOutput.log")
+
+	consoleLogger, err := GetLogger1("", WARN, Weekly, 3, ConsoleAppender)
+	if err != nil {
+		panic(err)
+	}
+	consoleLogger.Debug("DEBUG. Shouldn't see this in %s", "Console")
+	consoleLogger.Info("INFO. Shouldn't see this in %s", "Console")
+	consoleLogger.Warn("WARN. Should see this in %s", "Console")
+	consoleLogger.Error("ERROR. Should see this in %s", "Console")
+
+}

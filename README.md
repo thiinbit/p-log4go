@@ -12,6 +12,10 @@ Rolling log as:
 
 ### Import
 ```hell script
+// go.mod
+require github.com/thiinbit/p-log4go v0.7.0
+
+// xxx.go
 ...
 import (
   "github.com/thiinbit/p-log4go" // imports as package "PLog4Go"
@@ -71,6 +75,32 @@ Output looks
 // ./logs/stdout.log // Auto rotate file when app restart. Filename like stdout.log.20210620.172034
 To console log. should see in file.
 ```
+
+#### Example 4. Output to multi target.
+Code
+```go
+    // Use std to file
+	multiAppenderLogger, _ := GetLogger1("./logs/multiOutput.log", INFO, Hourly, 3, FileAppender|ConsoleAppender)
+	multiAppenderLogger.Trace("TRACE. Shouldn't see this in %s", "./logs/multiOutput.log & Console")
+	multiAppenderLogger.Debug("DEBUG. Shouldn't see this in %s", "./logs/multiOutput.log & Console")
+	multiAppenderLogger.Info("INFO. Should see this in %s", "./logs/multiOutput.log & Console")
+	multiAppenderLogger.Warn("WARN. Should see this in %s", "./logs/multiOutput.log & Console")
+	multiAppenderLogger.Error("ERROR. Should see this in %s", "./logs/multiOutput.log & Console")
+
+```
+
+Output looks
+```text
+// ./logs/multiOutput.log
+[INFO] 2021/06/26 11:54:18.489905 plog4go_test.go:73: INFO. Should see this in ./logs/multiOutput.log & Console
+[WARN] 2021/06/26 11:54:18.489959 plog4go_test.go:74: WARN. Should see this in ./logs/multiOutput.log & Console
+[ERROR] 2021/06/26 11:54:18.489988 plog4go_test.go:75: ERROR. Should see this in ./logs/multiOutput.log & Console
+```
+
+
+## Version
+v0.5.0: Support timed rotate file appender.
+v0.7.0: Support multi appender(FileAppender|ConsoleAppender).
 
 ## TODO
 - more conf
